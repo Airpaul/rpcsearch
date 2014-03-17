@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=gbk"/>
+<html>
+<head>
+    <title>stargate search page</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 60px;
+        }
+    </style>
+    <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+    <script language="javascript" src="/js/jquery-1.11.0.min.js"></script>
+    <script language="javascript" src="/js/bootstrap.min.js"></script>
+    <script language="javascript">
+
+        $(document).ready(function () {
+            $("#query").keydown(function (e) {
+                var curkey = e.which;
+                if (curkey == 13) {
+                    $("#querybtn").click();
+                    return false;
+                }
+            });
+            $.ajax({
+                type: "POST",
+                url: "star/fetchEnv",
+                data: {}
+            }).done(function (result) {
+                        $("#envlist li:gt(0)").remove();
+                        if (result.status == 200) {
+                            data = result.data;
+                            content = "";
+                            for (i = 0; i < data.length; i++) {
+                                content += "<li onclick='chooseenv(this)'  ><a href='#'><strong> " + data[i] + "</strong></a></li>";
+                            }
+                            $("#envlist").append(content);
+                        } else {
+                            $("#envlist").append("<li><a href='#'><font color='red'>没有可用环境！</font></a></li>");
+                        }
+                    });
+        });
+
+        function chooseenv(obj) {
+            $("#drop3").html("<strong>" + $(obj).text() +"</strong><b class='caret'></b>");
+        }
+
+        function search() {
+            query = $.trim($("#query").val());
+            namespace = $.trim($("#drop3").text());
+            if(namespace == null || namespace=="" || namespace=="选择环境") {
+                alert("请选择环境(在右上角)");
+                return false;
+            }
+            if(query == null || query=="") {
+                alert("请输入接口名关键字，如adcore");
+                return false;
+            }
+
+            param = {"query": query, "namespace":namespace};
+
+            $.ajax({
+                type: "POST",
+                url: "star/search",
+                data: param
+            }).done(function (result) {
+                        $("#result_table tr:gt(0)").remove();
+                        if (result.status == 200) {
+                            data = result.data;
+                            table_content = "";
+
+                            for (i = 0; i < data.length; i++) {
+                                table_content += "<tr><td>" + data[i].interfaceName + "</td><td width=40 style='word-break:break-all'>" + data[i].zkServer + "</td><td>" + data[i].path + "</td><td>" + data[i].ip + "&#58;" + data[i].port + "</td><td>" + data[i].version + "</td><td>" + data[i].group + "</td></tr>";
+                            }
+                            $("#tr").after(table_content);
+                        } else {
+                            $("#tr").after("<tr><td><font color='red'>没有可用服务！</font></td></tr>");
+                        }
+                    });
+        }
+
+    </script>
+</head>
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation" style="
+    border: 0px;
+    background-image: url('');
+    background-color: rgba(53, 110, 112, 1);
+    height: 60px;
+">
+
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+
+        </button>
+        <a class="navbar-brand" href="#" style="
+    font-size: 30px;">Stargate Service</a>
+    </div>
+    <div class="container">
+        <div class="navbar-collapse collapse">
+
+            <ul class="nav navbar-nav navbar-right">
+                <li id="fat-menu" id="env">
+                    <a id="drop3" role="button" class="dropdown-toggle"
+                       data-toggle="dropdown" >
+                        <strong>选择环境</strong>
+                        <b class="caret">
+                        </b>
+                    </a>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="drop3" id="envlist">
+
+                    </ul>
+                </li>
+
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<br/><br/><br/>
+
+<div class="container">
+    <div style="position:relative; top:60%; left:20%;">
+        <div class="col-lg-6">
+            <div class="input-group">
+                <input type="text" class="form-control" id="query" placeholder="Please input interface name or key word">
+      <span class="input-group-btn">
+        <button class="btn btn-default" id="querybtn" type="button" onclick="search()"
+                style="background-image: url('');background-color: rgba(0, 128, 0, 0.19);" >Go!
+        </button>
+      </span>
+            </div>
+        </div>
+
+    </div>
+
+
+    <br/> <br/> <br/> <br/>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"
+             style="text-align:center;background-image: url('');background-color: rgba(0, 128, 0, 0.19);">可用服务列表
+        </div>
+        <table class="table" id="result_table">
+            <tr id="tr">
+                <td>服务名</td>
+                <td>Zookeeper 集群</td>
+                <td>Zookeeper路径</td>
+                <td>服务提供者</td>
+                <td>版本号</td>
+                <td>Group</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>
